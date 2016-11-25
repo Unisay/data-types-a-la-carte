@@ -44,7 +44,7 @@ object main extends App {
   def add1(l: Exp, r: Exp): Exp = Inr[Val, Add, Exp](Add(l, r))
 
   val exp: Exp = add1(add1(val1(42), val1(43)), val1(66))
-  render("exp", exp)
+  render("exp", "add1(add1(val1(42), val1(43)), val1(66))", exp)
 
 }
 

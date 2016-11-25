@@ -26,3 +26,5 @@ resolvers ++= Seq(
 )
 
 libraryDependencies += "org.stanch" %% "reftree" % "0.8.0"
+
+tutSettings

@@ -10,7 +10,10 @@ import reftree.diagram._
 
 object Viewers {
 
-  def render(name: String, exp: Exp): Unit = renderer.render(name, Diagram(exp))
+  def render(name: String, caption: String, exp: Exp): Unit = {
+    print("render: " + exp)
+    renderer.render(name, Diagram(exp).withCaption(caption))
+  }
 
   val renderer = Renderer(renderingOptions = RenderingOptions(density = 75), directory = Paths.get("img"))
 
