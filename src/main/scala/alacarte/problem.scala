@@ -29,6 +29,6 @@ object problem extends App {
 
   val expression = Add(Val(10000), Add(Val(499), Val(1)))
 
-  println("evaled: " + eval(expression))
+  println("evaluated: " + eval(expression))
   println("rendered: " + render(expression))
 }
