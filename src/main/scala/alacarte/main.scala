@@ -1,49 +1,10 @@
 package alacarte
 
-import java.nio.file.Paths
-
 import alacarte.Viewers.render
-import reftree.core.RefTree.Ref
-import reftree.core.{RefTree, ToRefTree}
 
 import scala.language.higherKinds
 
-object Example1 extends App {
-
-  /*
-     data Expr = Val Int | Add Expr Expr
-  */
-  sealed trait Expr
-  case class Val(i: Int) extends Expr
-  case class Add(l: Expr, r: Expr) extends Expr
-
-  /*
-     eval :: Expr -> Int
-     eval (Val x)   = x
-     eval (Add x y) = eval x + eval y
-  */
-  def eval(expr: Expr): Int = expr match {
-    case Val(i) => i
-    case Add(l, r) => eval(l) + eval(r)
-  }
-
-  eval { Add(Val(10000), Add(Val(499), Val(1))) }
-
-
-  /*
-     render :: Expr -> String
-     render (Val x) = show x
-     render (Add x y) = "(" ++ render x ++ "+" ++ render y ++ ")"
-  */
-  def render(expr: Expr): String = expr match {
-    case Val(i) => i.toString
-    case Add(l, r) => "(" + render(l) + "+" + render(r) + ")"
-  }
-
-  render { Add(Val(10000), Add(Val(499), Val(1))) }
-}
-
-object Example2 extends App {
+object main extends App {
 
   sealed trait Expr[+F[_]]
   case class In[F[_]](f: F[Expr[F]]) extends Expr[F]
@@ -84,8 +45,6 @@ object Example2 extends App {
 
   val exp: Exp = add1(add1(val1(42), val1(43)), val1(66))
   render("exp", exp)
-
-
 
 }
 

@@ -2,7 +2,7 @@ package alacarte
 
 import java.nio.file.Paths
 
-import alacarte.Example2._
+import alacarte.main._
 import reftree.core.RefTree.Ref
 import reftree.core.ToRefTree
 import reftree.render._
