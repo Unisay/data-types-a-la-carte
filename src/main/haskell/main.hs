@@ -22,3 +22,19 @@ instance (Functor f, Functor g) => Functor (f :+: g) where
 
 foldExpr :: Functor f => (f a -> a) -> Expr f -> a
 foldExpr f (In t) = f (fmap (foldExpr f) t)
+
+class Functor f => Eval f where
+  evalAlgebra :: f Int -> Int
+
+instance Eval Val where
+  evalAlgebra (Val x) = x
+
+instance Eval Add where
+  evalAlgebra (Add x y) = x + y
+
+instance (Eval f, Eval g) => Eval (f :+: g) where
+  evalAlgebra (Inl x) = evalAlgebra x
+  evalAlgebra (Inr y) = evalAlgebra y
+
+eval :: Eval f => Expr f -> Int
+eval expr = foldExpr evalAlgebra expr
