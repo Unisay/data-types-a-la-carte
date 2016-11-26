@@ -10,6 +10,9 @@ type AddExpr = Expr Add
 
 data (f :+: g) e = Inl (f e) | Inr (g e)
 
+addExample :: Expr (Val :+: Add )
+addExample = In (Inr (Add (In (Inl (Val 118))) (In (Inl (Val 1219)))))
+
 instance Functor Val where
   fmap f (Val x) = Val x
 

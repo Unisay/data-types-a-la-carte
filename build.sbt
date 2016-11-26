@@ -2,7 +2,7 @@ name := "alacarte"
 
 version := "1.0"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.0"
 
 scalacOptions ++= Seq(
   "-unchecked",
@@ -20,12 +20,6 @@ scalacOptions ++= Seq(
   "-encoding", "UTF-8"
 )
 
-resolvers ++= Seq(
-  Resolver.bintrayRepo("stanch", "maven"),
-  Resolver.bintrayRepo("drdozer", "maven")
-)
-
-libraryDependencies += "org.stanch" %% "reftree" % "0.8.0"
 libraryDependencies += "org.typelevel" %% "cats" % "0.8.1"
 
 tutSettings

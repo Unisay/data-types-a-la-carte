@@ -1,6 +1,5 @@
 package alacarte
 
-//import alacarte.Viewers.render
 import cats.Functor
 import cats.syntax.functor._
 
@@ -10,7 +9,6 @@ object main extends App {
 
   sealed trait Expr[F[_]]
   case class In[F[_]](f: F[Expr[F]]) extends Expr[F]
-  def in[F[_]](f: F[Expr[F]]): Expr[F] = In[F](f)
 
   case class Val[E](i: Int)
   case class Add[E](l: E, r: E)
@@ -18,8 +16,8 @@ object main extends App {
   type IntExpr = Expr[Val]
   type AddExpr = Expr[Add]
 
-  def value0(i: Int): IntExpr = in[Val](Val(i))
-  def add0(l: AddExpr, r: AddExpr): AddExpr = in[Add](Add(l, r))
+  def value0(i: Int): IntExpr = In[Val](Val(i))
+  def add0(l: AddExpr, r: AddExpr): AddExpr = In[Add](Add(l, r))
 
   println(value0(42))
   println(add0(add0(null, add0(null, null)), add0(add0(null, null), null)))
@@ -28,13 +26,9 @@ object main extends App {
   case class Inl[F[_], G[_], E](fe: F[E]) extends Coproduct[F, G, E]
   case class Inr[F[_], G[_], E](ge: G[E]) extends Coproduct[F, G, E]
 
-  def inl[F[_], G[_], E](fe: F[E]): Coproduct[F, G, E] = Inl[F, G, E](fe)
-  def inr[F[_], G[_], E](ge: G[E]): Coproduct[F, G, E] = Inr[F, G, E](ge)
   type Cop[E] = Coproduct[Val, Add, E]
 
-  val addExample = in[Cop](inr(Add(in[Cop](inl(Val(11))), in[Cop](inl(Val(42))))))
-
-//  render("addExample", "add1(add1(val1(42), val1(43)), val1(66))", addExample)
+  val addExample = In[Cop](Inr(Add(In[Cop](Inl(Val(118))), In[Cop](Inl(Val(1219))))))
 
   implicit val ValFunctor: Functor[Val] = new Functor[Val] {
     def map[A, B](v: Val[A])(f: A => B): Val[B] = Val[B](v.i)
@@ -79,7 +73,6 @@ object main extends App {
         case Inl(v) => ev.evalAlgebra(v)
         case Inr(a) => ea.evalAlgebra(a)
       }
-
       val functorEvidence: Functor[Cop] = implicitly[Functor[Cop]]
     }
 
