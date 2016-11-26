@@ -10,7 +10,7 @@ import reftree.diagram._
 
 object Viewers {
 
-  def render(name: String, caption: String, exp: Exp): Unit = {
+  def render[E](name: String, caption: String, exp: Exp[E]): Unit = {
     print("render: " + exp)
     renderer.render(name, Diagram(exp).withCaption(caption))
   }
@@ -28,21 +28,21 @@ object Viewers {
   }
 
   implicit def _addToRefTree[E]: ToRefTree[Add[E]] = ToRefTree[Add[E]] { (add: Add[E]) =>
-    val t = implicitly[ToRefTree[Exp]]
+    val t = implicitly[ToRefTree[Exp[E]]]
     Ref(
       name = "Add",
       id = id(add),
-      children = List(t.refTree(add.l.asInstanceOf[Exp]), t.refTree(add.r.asInstanceOf[Exp])),
+      children = List(t.refTree(add.l.asInstanceOf[Exp[E]]), t.refTree(add.r.asInstanceOf[Exp[E]])),
       highlight = false,
       elide = false
     )
   }
 
-  implicit val _expToRefTree: ToRefTree[Exp] = ToRefTree[Exp] { (exp: Exp) =>
+  implicit def _expToRefTree[E]: ToRefTree[Exp[E]] = ToRefTree[Exp[E]] { (exp: Exp[E]) =>
     exp match {
       case inl @ Inl(v: Val[_]) =>
         Ref(name = "Inl", id = id(inl),
-          children = Seq(implicitly[ToRefTree[Val[Any]]].refTree(v)),
+          children = Seq(implicitly[ToRefTree[Val[E]]].refTree(v)),
           highlight = false, elide = false)
       case inr @ Inr(a: Add[_]) =>
         Ref(name = "Inr", id = id(inr),

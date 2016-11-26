@@ -26,5 +26,8 @@ resolvers ++= Seq(
 )
 
 libraryDependencies += "org.stanch" %% "reftree" % "0.8.0"
+libraryDependencies += "org.typelevel" %% "cats" % "0.8.1"
 
 tutSettings
+
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
