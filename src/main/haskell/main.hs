@@ -1,4 +1,8 @@
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 module Alacarte where
 
 -- Fixing the expression problem
@@ -48,9 +52,6 @@ eval expr = foldExpr evalAlgebra expr
 
 -- Automating injections
 
-(⊕) :: (Add :<: f ) => Expr f -> Expr f -> Expr f -- unicode 2295
-val :: (Val :<: f ) => Int -> Expr f
-
 class (Functor sub, Functor sup) => sub :<: sup where
   inj :: sub a -> sup a
 
@@ -68,3 +69,12 @@ instance (Functor f, Functor g) => f :<: (f :+: g) where
 -- the first injection with an additional Inr.
 instance (Functor f, Functor g, Functor h, f :<: g) => f :<: (h :+: g) where
   inj = Inr . inj
+
+inject :: (g :<: f) => g (Expr f) -> Expr f
+inject = In . inj
+
+val :: (Val :<: f) => Int -> Expr f
+val x = inject (Val x)
+
+(⊕) :: (Add :<: f) => Expr f -> Expr f -> Expr f
+x ⊕ y = inject (Add x y)

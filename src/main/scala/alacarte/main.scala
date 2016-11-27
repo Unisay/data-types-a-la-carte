@@ -83,8 +83,7 @@ object main extends App {
 
   println(eval(addExample))
 
-  def ⊕ [F[_]](l: Expr[F], r: Expr[F])(implicit ev: Add :<: F): Expr[F] = ???
-  def value[F[_]](i: Int)(implicit ev: Val :<: F): Expr[F] = ???
+  // Automating injections
 
   trait :<:[SUB[_], SUP[_]] {
     type E
@@ -116,6 +115,15 @@ object main extends App {
       val inj: F[E] => Coproduct[H, G, E] = fe => Inr[H, G, E](fg.inj(fe))
     }
 
+  def inject[G[_], F[_]](gef: G[Expr[F]])(implicit ev: G :<: F): Expr[F] = {
+    In(ev.inj(gef))
+  }
+
+  def ⊕ [F[_]](l: Expr[F], r: Expr[F])(implicit ev: Add :<: F): Expr[F] =
+    inject(Add(l, r))
+
+  def value[F[_]](i: Int)(implicit valF: Val :<: F): Expr[F] =
+    inject[Val, F](Val(i))
 
 }
 
