@@ -30,15 +30,15 @@ object main extends App {
 
   val addExample = In[Cop](Inr(Add(In[Cop](Inl(Val(118))), In[Cop](Inl(Val(1219))))))
 
-  implicit val ValFunctor: Functor[Val] = new Functor[Val] {
+  implicit val functorVal: Functor[Val] = new Functor[Val] {
     def map[A, B](v: Val[A])(f: A => B): Val[B] = Val[B](v.i)
   }
 
-  implicit val AddFunctor: Functor[Add] = new Functor[Add] {
+  implicit val functorAdd: Functor[Add] = new Functor[Add] {
     def map[A, B](add: Add[A])(f: A => B): Add[B] = Add(f(add.l), f(add.r))
   }
 
-  implicit def ExpFunctor[F[_]: Functor, G[_]: Functor]: Functor[Coproduct[F, G, ?]] =
+  implicit def functorCoproduct[F[_]: Functor, G[_]: Functor]: Functor[Coproduct[F, G, ?]] =
     new Functor[Coproduct[F, G, ?]] {
       def map[A, B](fga: Coproduct[F, G, A])(f: A => B): Coproduct[F, G, B] =
         fga match {
@@ -57,17 +57,17 @@ object main extends App {
     def evalAlgebra(f: F[Int]): Int
   }
 
-  implicit val EvalVal: Eval[Val] = new Eval[Val]() {
+  implicit val evalVal: Eval[Val] = new Eval[Val]() {
     def evalAlgebra(v: Val[Int]): Int = v.i
     val functorEvidence: Functor[Val] = implicitly[Functor[Val]]
   }
 
-  implicit val EvalAdd: Eval[Add] = new Eval[Add] {
+  implicit val evalAdd: Eval[Add] = new Eval[Add] {
     def evalAlgebra(a: Add[Int]): Int = a.l + a.r
     val functorEvidence: Functor[Add] = implicitly[Functor[Add]]
   }
 
-  implicit def EvalExp(implicit ev: Eval[Val], ea: Eval[Add]): Eval[Cop] =
+  implicit def evalCop(implicit ev: Eval[Val], ea: Eval[Add]): Eval[Cop] =
     new Eval[Cop] {
       def evalAlgebra(exp: Cop[Int]): Int = exp match {
         case Inl(v) => ev.evalAlgebra(v)
@@ -82,6 +82,40 @@ object main extends App {
   }
 
   println(eval(addExample))
+
+  def ⊕ [F[_]](l: Expr[F], r: Expr[F])(implicit ev: Add :<: F): Expr[F] = ???
+  def value[F[_]](i: Int)(implicit ev: Val :<: F): Expr[F] = ???
+
+  trait :<:[SUB[_], SUP[_]] {
+    type E
+    val subFunctor: Functor[SUB]
+    val supFunctor: Functor[SUP]
+    val inj: SUB[E] => SUP[E]
+  }
+
+  implicit def reflexive[F[_], E0](implicit fIsFunctor: Functor[F]): F :<: F = new (F :<: F) {
+    type E = E0
+    val subFunctor = fIsFunctor
+    val supFunctor = fIsFunctor
+    val inj: F[E] => F[E] = identity
+  }
+
+  implicit def injectF[F[_]: Functor, G[_]: Functor, E0]: F :<: Coproduct[F, G, ?] =
+    new (F :<: Coproduct[F, G, ?]) {
+      type E = E0
+      val subFunctor = implicitly[Functor[F]]
+      val supFunctor = functorCoproduct
+      val inj: F[E] => Coproduct[F, G, E] = fe => Inl[F, G, E](fe)
+    }
+
+  implicit def injectFHG[F[_]: Functor, G[_]: Functor, H[_]: Functor](implicit fg: F :<: G): F :<: Coproduct[H, G, ?] =
+    new (F :<: Coproduct[H, G, ?]) {
+      type E = fg.E
+      val subFunctor = implicitly[Functor[F]]
+      val supFunctor = functorCoproduct
+      val inj: F[E] => Coproduct[H, G, E] = fe => Inr[H, G, E](fg.inj(fe))
+    }
+
 
 }
 

@@ -1,6 +1,8 @@
 {-# LANGUAGE TypeOperators #-}
 module Alacarte where
 
+-- Fixing the expression problem
+
 data Expr f = In (f (Expr f))
 data Val e = Val Int
 data Add e = Add e e
@@ -12,6 +14,8 @@ data (f :+: g) e = Inl (f e) | Inr (g e)
 
 addExample :: Expr (Val :+: Add )
 addExample = In (Inr (Add (In (Inl (Val 118))) (In (Inl (Val 1219)))))
+
+-- Evaluation
 
 instance Functor Val where
   fmap f (Val x) = Val x
@@ -41,3 +45,26 @@ instance (Eval f, Eval g) => Eval (f :+: g) where
 
 eval :: Eval f => Expr f -> Int
 eval expr = foldExpr evalAlgebra expr
+
+-- Automating injections
+
+(⊕) :: (Add :<: f ) => Expr f -> Expr f -> Expr f -- unicode 2295
+val :: (Val :<: f ) => Int -> Expr f
+
+class (Functor sub, Functor sup) => sub :<: sup where
+  inj :: sub a -> sup a
+
+-- :<: is reflexive
+instance Functor f => f :<: f where
+  inj = id
+
+-- how to inject any value of type f a to a value of type (f :+: g) a,
+-- regardless of g
+instance (Functor f, Functor g) => f :<: (f :+: g) where
+  inj = Inl
+
+-- provided we can inject a value of type f a into one of type g a,
+-- we can also inject f a into a larger type (h :+: g) a by composing
+-- the first injection with an additional Inr.
+instance (Functor f, Functor g, Functor h, f :<: g) => f :<: (h :+: g) where
+  inj = Inr . inj
