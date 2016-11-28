@@ -111,14 +111,16 @@ object main extends App {
       val inj: F[E] => Coproduct[H, G, E] = fe => Inr[H, G, E](fg.inj(fe))
     }
 
-  def inject[G[_], F[_]](gef: G[Expr[F]])(implicit ev: Inject[Expr[F], G, F]): Expr[F] =
-    In(ev.inj(gef))
+  def inject[G[_], F[_]](gef: G[Expr[F]])(implicit ev: Inject[Expr[F], G, F]): Expr[F] = In(ev.inj(gef))
 
-  def ⊕ [F[_]](l: Expr[F], r: Expr[F])(implicit ev: Inject[Expr[F], Add, F]): Expr[F] =
-    inject(Add(l, r))
+  def value[F[_]](i: Int)(implicit ev: Inject[Expr[F], Val, F]): Expr[F] = inject[Val, F](Val(i))
 
-  def value[F[_]](i: Int)(implicit ev: Inject[Expr[F], Val, F]): Expr[F] =
-    inject[Val, F](Val(i))
+  implicit class ExprOps[F[_]](val left: Expr[F]) extends AnyVal {
+    def ⊕(right: Expr[F])(implicit ev: Inject[Expr[F], Add, F]): Expr[F] = inject(Add(left, right))
+  }
 
+  val x = value[Cop](30000) ⊕ value(1330) ⊕ value(7)
+
+  println(eval(x))
 }
 
