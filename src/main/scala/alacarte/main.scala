@@ -85,44 +85,39 @@ object main extends App {
 
   // Automating injections
 
-  trait :<:[SUB[_], SUP[_]] {
-    type E
-    val subFunctor: Functor[SUB]
-    val supFunctor: Functor[SUP]
-    val inj: SUB[E] => SUP[E]
+  trait Inject[E, A[_], B[_]] {
+    val subFunctor: Functor[A]
+    val supFunctor: Functor[B]
+    val inj: A[E] => B[E]
   }
 
-  implicit def reflexive[F[_], E0](implicit fIsFunctor: Functor[F]): F :<: F = new (F :<: F) {
-    type E = E0
+  implicit def reflexive[F[_], E](implicit fIsFunctor: Functor[F]): Inject[E, F, F] = new Inject[E, F, F] {
     val subFunctor = fIsFunctor
     val supFunctor = fIsFunctor
     val inj: F[E] => F[E] = identity
   }
 
-  implicit def injectF[F[_]: Functor, G[_]: Functor, E0]: F :<: Coproduct[F, G, ?] =
-    new (F :<: Coproduct[F, G, ?]) {
-      type E = E0
+  implicit def injectF[F[_]: Functor, G[_]: Functor, E]: Inject[E, F, Coproduct[F, G, ?]] =
+    new Inject[E, F, Coproduct[F, G, ?]] {
       val subFunctor = implicitly[Functor[F]]
       val supFunctor = functorCoproduct
       val inj: F[E] => Coproduct[F, G, E] = fe => Inl[F, G, E](fe)
     }
 
-  implicit def injectFHG[F[_]: Functor, G[_]: Functor, H[_]: Functor](implicit fg: F :<: G): F :<: Coproduct[H, G, ?] =
-    new (F :<: Coproduct[H, G, ?]) {
-      type E = fg.E
+  implicit def injectFHG[F[_]: Functor, G[_]: Functor, H[_]: Functor, E](implicit fg: Inject[E, F, G]): Inject[E, F, Coproduct[H, G, ?]] =
+    new Inject[E, F, Coproduct[H, G, ?]] {
       val subFunctor = implicitly[Functor[F]]
       val supFunctor = functorCoproduct
       val inj: F[E] => Coproduct[H, G, E] = fe => Inr[H, G, E](fg.inj(fe))
     }
 
-  def inject[G[_], F[_]](gef: G[Expr[F]])(implicit ev: G :<: F): Expr[F] = {
+  def inject[G[_], F[_]](gef: G[Expr[F]])(implicit ev: Inject[Expr[F], G, F]): Expr[F] =
     In(ev.inj(gef))
-  }
 
-  def ⊕ [F[_]](l: Expr[F], r: Expr[F])(implicit ev: Add :<: F): Expr[F] =
+  def ⊕ [F[_]](l: Expr[F], r: Expr[F])(implicit ev: Inject[Expr[F], Add, F]): Expr[F] =
     inject(Add(l, r))
 
-  def value[F[_]](i: Int)(implicit valF: Val :<: F): Expr[F] =
+  def value[F[_]](i: Int)(implicit ev: Inject[Expr[F], Val, F]): Expr[F] =
     inject[Val, F](Val(i))
 
 }
