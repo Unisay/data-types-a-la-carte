@@ -78,3 +78,10 @@ val x = inject (Val x)
 
 (⊕) :: (Add :<: f) => Expr f -> Expr f -> Expr f
 x ⊕ y = inject (Add x y)
+
+-- Examples
+
+data Mul x = Mul x x
+
+instance Functor Mul where
+  fmap f (Mul x y) = Mul (f x) (f y)
