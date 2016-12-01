@@ -67,13 +67,13 @@ object main extends App {
     val functorEvidence: Functor[Add] = implicitly[Functor[Add]]
   }
 
-  implicit def evalCop(implicit ev: Eval[Val], ea: Eval[Add]): Eval[Cop] =
-    new Eval[Cop] {
-      def evalAlgebra(exp: Cop[Int]): Int = exp match {
-        case Inl(v) => ev.evalAlgebra(v)
-        case Inr(a) => ea.evalAlgebra(a)
+  implicit def evalCoproduct[F[_]: Functor, G[_]: Functor](implicit ef: Eval[F], eg: Eval[G]): Eval[Coproduct[F, G, ?]] =
+    new Eval[Coproduct[F, G, ?]] {
+      def evalAlgebra(exp: Coproduct[F, G, Int]): Int = exp match {
+        case Inl(f) => ef.evalAlgebra(f)
+        case Inr(g) => eg.evalAlgebra(g)
       }
-      val functorEvidence: Functor[Cop] = implicitly[Functor[Cop]]
+      val functorEvidence: Functor[Coproduct[F, G, ?]] = implicitly[Functor[Coproduct[F, G, ?]]]
     }
 
   def eval[E[_]](e: Expr[E])(implicit ev: Eval[E]): Int = {
@@ -111,11 +111,29 @@ object main extends App {
   def value[F[_]](i: Int)(implicit ev: Val :<: F): Expr[F] = inject[Val, F](Val(i))
 
   implicit class ExprOps[F[_]](val left: Expr[F]) extends AnyVal {
-    def ⊕(right: Expr[F])(implicit ev: Add :<: F): Expr[F] = inject(Add(left, right))
+    def +(right: Expr[F])(implicit ev: Add :<: F): Expr[F] = inject(Add(left, right))
+    def *(right: Expr[F])(implicit ev: Mul :<: F): Expr[F] = inject(Mul(left, right))
   }
 
-  val x: Expr[Cop] = value[Cop](30000) ⊕ value(1330) ⊕ value(7)
+  val x: Expr[Cop] = value[Cop](30000) + value(1330) + value(7)
 
   println(eval(x))
+
+  case class Mul[E](l: E, r: E)
+
+  implicit val functorMul: Functor[Mul] = new Functor[Mul] {
+    def map[A, B](mul: Mul[A])(f: A => B): Mul[B] = Mul(f(mul.l), f(mul.r))
+  }
+
+  implicit val evalMul: Eval[Mul] = new Eval[Mul] {
+    def evalAlgebra(a: Mul[Int]): Int = a.l * a.r
+    val functorEvidence: Functor[Mul] = implicitly[Functor[Mul]]
+  }
+
+  type Cop2[E] = Coproduct[Mul, Cop, E]
+
+  val y: Expr[Cop2] = value[Cop2](2) + value[Cop2](4) * value(6)
+
+  println(eval(y))
 }
 

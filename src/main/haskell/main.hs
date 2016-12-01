@@ -76,6 +76,8 @@ inject = In . inj
 val :: (Val :<: f) => Int -> Expr f
 val x = inject (Val x)
 
+infixl 6 ⊕
+
 (⊕) :: (Add :<: f) => Expr f -> Expr f -> Expr f
 x ⊕ y = inject (Add x y)
 
@@ -85,3 +87,13 @@ data Mul x = Mul x x
 
 instance Functor Mul where
   fmap f (Mul x y) = Mul (f x) (f y)
+
+instance Eval Mul where
+  evalAlgebra (Mul x y) = x * y
+
+infixl 7 ⊗
+
+(⊗) :: (Mul :<: f) => Expr f -> Expr f -> Expr f
+x ⊗ y = inject (Mul x y)
+
+-- let x :: Expr (Val :+: Add :+: Mul) = val 80 ⊗ val 5 ⊕ val 4
